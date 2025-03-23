@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements | 5S Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col md:flex-row">
+    
+    <button id="menu-toggle" class="md:hidden bg-blue-600 p-3 fixed top-4 right-4 rounded z-50">☰ Menu</button>
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
+
+    <aside id="sidebar" class="w-64 bg-gray-800 h-screen p-6 fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50">
+        <button id="close-sidebar" class="md:hidden text-white text-2xl absolute top-4 right-4">✖</button>
+        <h1 class="text-2xl font-bold mb-6">5S Dashboard</h1>
+        <nav>
+            <ul>
+                <li class="mb-4"><a href="index.html" class="text-blue-400">📊 Dashboard</a></li>
+                <li class="mb-4"><a href="add-activity.html" class="text-gray-300 hover:text-white">📷 Add Activity</a></li>
+                <li class="mb-4"><a href="announcements.html" class="text-gray-300 hover:text-white">📢 Announcements</a></li>
+                <li class="mb-4"><a href="attendance.html" class="text-gray-300 hover:text-white">✅ Attendance</a></li>
+                <li class="mb-4"><a href="records.html" class="text-gray-300 hover:text-white">📋 View Records</a></li>
+                <li class="mb-4"><a href="view-attendance.html" class="text-gray-300 hover:text-white">📋 View Attendance</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+
+    <div class="flex-1 p-8">
+        <h1 class="text-4xl font-bold mb-6">📢 Announcements</h1>
+
+    
+        <div id="announcementContainer" class="space-y-6">
+        
+        </div>
+
+    
+        <p id="noAnnouncements" class="text-gray-400 text-center hidden">No announcements available.</p>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeSidebar = document.getElementById('close-sidebar');
+
+        menuToggle.addEventListener('click', function () {
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            overlay.classList.remove('hidden');
+        });
+
+        closeSidebar.addEventListener('click', function () {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            overlay.classList.add('hidden');
+        });
+
+        overlay.addEventListener('click', function () {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            overlay.classList.add('hidden');
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+                overlay.classList.add('hidden');
+            }
+        });
+
+        async function fetchAnnouncements() {
+            try {
+                const response = await fetch("http://localhost:5000/announcements");
+                const announcements = await response.json();
+                
+                const container = document.getElementById("announcementContainer");
+                const noAnnouncementsMsg = document.getElementById("noAnnouncements");
+
+                container.innerHTML = "";
+                if (announcements.length === 0) {
+                    noAnnouncementsMsg.classList.remove("hidden");
+                    return;
+                }
+
+                noAnnouncementsMsg.classList.add("hidden");
+
+                announcements.forEach(announcement => {
+                    const announcementCard = document.createElement("div");
+                    announcementCard.className = "bg-gray-800 p-6 rounded-lg shadow-lg border-l-4 border-blue-500";
+                    announcementCard.innerHTML = `
+                        <h2 class="text-xl font-semibold">${announcement.message}</h2>
+                        <p class="text-gray-400 text-sm mt-2">📅 ${new Date(announcement.timestamp).toLocaleString()} | 📝 ${announcement.postedBy}</p>
+                    `;
+                    container.appendChild(announcementCard);
+                });
+            } catch (error) {
+                console.error("Error fetching announcements:", error);
+            }
+        }
+
+        window.onload = () => {
+            fetchAnnouncements();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Register</title>
+    <style>
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidebar.active {
+            transform: translateX(0);
+        }
+        @media (min-width: 768px) {
+            #sidebar {
+                transform: translateX(0);
+            }
+            #menu-toggle {
+                display: none;
+            }
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        #overlay.active {
+            display: block;
+        }
+        /* For responsive table */
+        @media (max-width: 768px) {
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+    <body class="bg-gray-900 text-white flex flex-col md:flex-row">
+        <p class="md:hidden p-3 fixed top-4 left-4 rounded z-50 text-2xl font-bold mb-6" style="font-weight: bold;">5S Activity Portal</p>
+        <button id="menu-toggle" class="md:hidden bg-blue-600 p-3 fixed top-4 right-4 rounded z-50">☰ Menu</button>
+        <div id="overlay"></div>
+        <aside id="sidebar" class="w-64 bg-gray-800 h-screen p-6 fixed md:relative z-50 md:translate-x-0 opacity-0 transition-opacity duration-300">
+            <button id="close-sidebar" class="md:hidden text-white text-2xl absolute top-4 right-4">✖</button>
+            <h1 class="text-2xl font-bold mb-6">5S Activity Portal</h1>
+            <nav>
+                <ul>
+                    <li class="mb-4"><a href="index.html" class="text-blue-400">📊 Dashboard</a></li>
+                    <li class="mb-4"><a href="add-activity.html" class="text-gray-300 hover:text-white">📷 Add Activity</a></li>
+                    <li class="mb-4"><a href="announcements.html" class="text-gray-300 hover:text-white">📢 Announcements</a></li>
+                    <li class="mb-4"><a href="attendance.html" class="text-gray-300 hover:text-white">✅ Attendance</a></li>
+                    <li class="mb-4"><a href="records.html" class="text-gray-300 hover:text-white">📋 View Records</a></li>
+                    <li class="mb-4"><a href="view-attendance.html" class="text-gray-300 hover:text-white">📋 View Attendance</a></li>
+                </ul>
+            </nav>
+        </aside>
+    
+        <div class="container mx-auto p-8 flex-1">
+            <br>
+            <br>
+            <h1 class="text-3xl font-bold mb-6">Attendance Register</h1>
+            
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <table class="w-full border-collapse border border-gray-600 text-center">
+                    <thead>
+                        <tr class="bg-gray-700">
+                            <th class="border border-gray-600 p-2">#</th>
+                            <th class="border border-gray-600 p-2">User Name</th>
+                            <th class="border border-gray-600 p-2">Division</th>
+                            <th class="border border-gray-600 p-2">Event</th>
+                            <th class="border border-gray-600 p-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTable" class="bg-gray-900">
+                        <!-- Attendance records will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <script>
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const menuToggle = document.getElementById('menu-toggle');
+            const closeSidebar = document.getElementById('close-sidebar');
+            
+            menuToggle.addEventListener('click', function () {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+            });
+            
+            closeSidebar.addEventListener('click', function () {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+            
+            overlay.addEventListener('click', function () {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+            
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            });
+            
+            async function fetchAttendance() {
+                const response = await fetch("http://localhost:5000/view-attendance");
+                const records = await response.json();
+                
+                const tableBody = document.getElementById("attendanceTable");
+                tableBody.innerHTML = "";
+                
+                records.forEach((record, index) => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="border border-gray-600 p-2">${index + 1}</td>
+                        <td class="border border-gray-600 p-2">${record.userName}</td>
+                        <td class="border border-gray-600 p-2">${record.division}</td>
+                        <td class="border border-gray-600 p-2">${record.event}</td>
+                        <td class="border border-gray-600 p-2">${record.attended ? "✔ Present" : "❌ Absent"}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            window.onload = () => {
+                fetchAttendance();
+                document.getElementById('sidebar').classList.remove('opacity-0');
+            };
+        </script>
+    </body>
+</html>

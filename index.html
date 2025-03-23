@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | 5S Activity Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidebar.active {
+            transform: translateX(0);
+        }
+        @media (min-width: 768px) {
+            #sidebar {
+                transform: translateX(0);
+            }
+            #menu-toggle {
+                display: none;
+            }
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        #overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col md:flex-row">
+    <p  class="md:hidden  p-3 fixed top-4 left-4 rounded z-50 text-2xl font-bold mb-6" style="font-weight: bold ;">5S Activity Portal</p>
+    <button id="menu-toggle" class="md:hidden bg-blue-600 p-3 fixed top-4 right-4 rounded z-50">☰ Menu</button>
+    <div id="overlay"></div>
+    <aside id="sidebar" class="w-64 bg-gray-800 h-screen p-6 fixed md:relative z-50 md:translate-x-0 opacity-0 transition-opacity duration-300">
+        <button id="close-sidebar" class="md:hidden text-white text-2xl absolute top-4 right-4">✖</button>
+        <h1 class="text-2xl font-bold mb-6">5S Activity Portal</h1>
+        <nav>
+            <ul>
+                <li class="mb-4"><a href="index.html" class="text-blue-400">📊 Dashboard</a></li>
+                <li class="mb-4"><a href="add-activity.html" class="text-gray-300 hover:text-white">📷 Add Activity</a></li>
+                <li class="mb-4"><a href="announcements.html" class="text-gray-300 hover:text-white">📢 Announcements</a></li>
+                <li class="mb-4"><a href="attendance.html" class="text-gray-300 hover:text-white">✅ Attendance</a></li>
+                <li class="mb-4"><a href="records.html" class="text-gray-300 hover:text-white">📋 View Records</a></li>
+                <li class="mb-4"><a href="view-attendance.html" class="text-gray-300 hover:text-white">📋 View Attendance</a></li>
+            </ul>
+        </nav>
+    </aside>
+    <div class="flex-1 p-8 mt-16 md:mt-0">
+        <h1 class="text-4xl font-bold mb-6">📊 Dashboard</h1>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-lg bg-opacity-90 text-gray-900">
+                <h3 class="text-xl font-semibold mb-3">Total Activities</h3>
+                <p id="totalActivities" class="text-gray-600 text-3xl font-bold">Loading...</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-lg bg-opacity-90 text-gray-900">
+                <h3 class="text-xl font-semibold mb-3">Total Unique Users</h3>
+                <p id="totalUsers" class="text-gray-600 text-3xl font-bold">Loading...</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-lg bg-opacity-90 text-gray-900">
+                <h3 class="text-xl font-semibold mb-3">Total Announcements</h3>
+                <p id="totalAnnouncements" class="text-gray-600 text-3xl font-bold">Loading...</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeSidebar = document.getElementById('close-sidebar');
+        menuToggle.addEventListener('click', function () {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+        closeSidebar.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        overlay.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        });
+        async function fetchDashboardSummary() {
+            try {
+                const response = await fetch('http://localhost:5000/dashboard-summary');
+                const data = await response.json();
+                document.getElementById('totalActivities').innerText = data.totalActivities || "N/A";
+                document.getElementById('totalUsers').innerText = data.totalUsers || "N/A";
+                document.getElementById('totalAnnouncements').innerText = data.totalAnnouncements || "N/A";
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+                document.getElementById('totalActivities').innerText = "N/A";
+                document.getElementById('totalUsers').innerText = "N/A";
+                document.getElementById('totalAnnouncements').innerText = "N/A";
+            }
+        }
+        window.onload = () => {
+            fetchDashboardSummary();
+            document.getElementById('sidebar').classList.remove('opacity-0');
+        };
+
+        
+    </script>
+</body>
+</html>

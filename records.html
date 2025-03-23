@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Records | 5S Dashboard</title>
+    <style>
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidebar.active {
+            transform: translateX(0);
+        }
+        @media (min-width: 768px) {
+            #sidebar {
+                transform: translateX(0);
+            }
+            #menu-toggle {
+                display: none;
+            }
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        #overlay.active {
+            display: block;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col md:flex-row">
+   
+    <button id="menu-toggle" class="md:hidden bg-blue-600 p-3 fixed top-4 right-4 rounded z-50">☰ Menu</button>
+     <br>
+     <br>
+    <div id="overlay"></div>
+    <aside id="sidebar" class="w-64 bg-gray-800 h-screen p-6 fixed md:relative z-50 md:translate-x-0 opacity-0 transition-opacity duration-300">
+        <button id="close-sidebar" class="md:hidden text-white text-2xl absolute top-4 right-4">✖</button>
+        <h1 class="text-2xl font-bold mb-6">5S Activity Portal</h1>
+        <nav>
+            <ul>
+                <li class="mb-4"><a href="index.html" class="text-blue-400">📊 Dashboard</a></li>
+                <li class="mb-4"><a href="add-activity.html" class="text-gray-300 hover:text-white">📷 Add Activity</a></li>
+                <li class="mb-4"><a href="announcements.html" class="text-gray-300 hover:text-white">📢 Announcements</a></li>
+                <li class="mb-4"><a href="attendance.html" class="text-gray-300 hover:text-white">✅ Attendance</a></li>
+                <li class="mb-4"><a href="records.html" class="text-gray-300 hover:text-white">📋 View Records</a></li>
+                <li class="mb-4"><a href="view-attendance.html" class="text-gray-300 hover:text-white">📋 View Attendance</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <div class="flex-1 p-8">
+        <br>
+        <h1 class="text-4xl font-bold mb-6">📋 View Records</h1>
+
+    
+        <div class="grid grid-cols-3 gap-6 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-l font-bold">Total Activities</h2>
+                <p id="totalActivities" class="text-3xl font-semibold">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-l font-bold">Unique Users</h2>
+                <p id="uniqueUsers" class="text-3xl font-semibold">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-l font-bold">Latest Update</h2>
+                <p id="latestUpdate" class="text-lg">N/A</p>
+            </div>
+        </div>
+
+   
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+            <label class="block mb-2">Division:</label>
+            <select id="division" class="w-full p-2 mb-4 bg-gray-700 rounded">
+                <option value="">Select Division</option>
+                <option value="SMS">SMS</option>
+                <option value="RMD">RMD</option>
+                <option value="PD">PD</option>
+                <option value="CS">CS</option>
+                <option value="ADMIN & HR">ADMIN & HR</option>
+                <option value="SID">SID</option>
+            </select>
+
+            <label class="block mb-2">Zone:</label>
+            <select id="zone" class="w-full p-2 mb-4 bg-gray-700 rounded">
+                <option value="">Select Zone</option>
+            </select>
+
+            <button onclick="fetchRecords()" class="bg-blue-500 px-4 py-2 rounded">View Records</button>
+        </div>
+
+       
+        <div id="recordsContainer" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <table class="w-full border-collapse border border-gray-600 text-center">
+                <thead>
+                    <tr class="bg-gray-700">
+                        <th class="border border-gray-600 p-2">Date</th>
+                        <th class="border border-gray-600 p-2">User Name</th>
+                        <th class="border border-gray-600 p-2">Activities</th>
+                       
+                    </tr>
+                </thead>
+                <tbody id="recordsTable" class="bg-gray-900">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const zoneMapping = {
+            "SMS": ["SM1", "SM2", "SM3", "SM4", "SM5", "SM6", "SM7"],
+            "RMD": ["RM1", "RM2", "RM3", "RM4", "RM5", "RM6", "RM7", "RM8", "RM9", "RM10", "RM11"],
+            "PD": ["PD1", "PD2", "PD3", "PD4", "PD5", "PD6", "PD7", "PD8"],
+            "CS": ["CS1", "CS2", "CS3", "CS4"],
+            "ADMIN & HR": ["AD1", "AD2", "AD3", "AD4", "AD5", "AD6", "AD7", "AD8"],
+            "SID": ["SD1", "SD2", "SD3", "SD4", "SD5", "SD6", "SD7", "SD8", "SD9", "SD10", "SD11", "SD12", "SD13", "SD14"]
+        };
+
+        document.getElementById("division").addEventListener("change", function() {
+            const division = this.value;
+            const zoneSelect = document.getElementById("zone");
+            zoneSelect.innerHTML = "<option value=''>Select Zone</option>";
+            if (division && zoneMapping[division]) {
+                zoneMapping[division].forEach(zone => {
+                    const option = document.createElement("option");
+                    option.value = zone;
+                    option.textContent = zone;
+                    zoneSelect.appendChild(option);
+                });
+            }
+        });
+
+        async function fetchRecords() {
+            const division = document.getElementById("division").value;
+            const zone = document.getElementById("zone").value;
+
+            if (!division || !zone) {
+                alert("Please select both Division and Zone.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5000/view-records?division=${encodeURIComponent(division)}&zone=${encodeURIComponent(zone)}`);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    alert("No records found.");
+                    return;
+                }
+
+                const tableBody = document.getElementById("recordsTable");
+                tableBody.innerHTML = "";
+
+                data.forEach(record => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td class="border border-gray-600 p-3">${record.date}</td>
+                        <td class="border border-gray-600 p-3">${record.userName}</td>
+                        <td class="border border-gray-600 p-3">${record.numOfActivities}</td>
+                        
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                document.getElementById("totalActivities").innerText = data.reduce((sum, r) => sum + r.numOfActivities, 0);
+                document.getElementById("uniqueUsers").innerText = new Set(data.map(r => r.userName)).size;
+                document.getElementById("latestUpdate").innerText = data[0].date;
+            } catch (error) {
+                alert("Error fetching records.");
+            }
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeSidebar = document.getElementById('close-sidebar');
+        menuToggle.addEventListener('click', function () {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+        closeSidebar.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        overlay.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        });
+
+        window.onload = () => {
+          
+            document.getElementById('sidebar').classList.remove('opacity-0');
+        };
+
+
+    </script>
+</body>
+</html>

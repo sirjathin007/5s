@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Activity | 5S Dashboard</title>
+    <style>
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidebar.active {
+            transform: translateX(0);
+        }
+        @media (min-width: 768px) {
+            #sidebar {
+                transform: translateX(0);
+            }
+            #menu-toggle {
+                display: none;
+            }
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        #overlay.active {
+            display: block;
+        }
+    </style> 
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white flex">
+    <button id="menu-toggle" class="md:hidden bg-blue-600 p-3 fixed top-4 right-4 rounded z-50">☰ Menu</button>
+
+    <div id="overlay"></div>
+    <aside id="sidebar" class="w-64 bg-gray-800 h-screen p-6 fixed md:relative z-50 md:translate-x-0 opacity-0 transition-opacity duration-300">
+        <button id="close-sidebar" class="md:hidden text-white text-2xl absolute top-4 right-4">✖</button>
+        <h1 class="text-2xl font-bold mb-6">5S Dashboard</h1>
+        <nav>
+            <ul>
+                <li class="mb-4"><a href="index.html" class="text-blue-400">📊 Dashboard</a></li>
+                <li class="mb-4"><a href="add-activity.html" class="text-gray-300 hover:text-white">📷 Add Activity</a></li>
+                <li class="mb-4"><a href="announcements.html" class="text-gray-300 hover:text-white">📢 Announcements</a></li>
+                <li class="mb-4"><a href="attendance.html" class="text-gray-300 hover:text-white">✅ Attendance</a></li>
+                <li class="mb-4"><a href="records.html" class="text-gray-300 hover:text-white">📋 View Records</a></li>
+                <li class="mb-4"><a href="view-attendance.html" class="text-gray-300 hover:text-white">📋 View Attendance</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+
+    <div class="flex-1 p-8">
+        <h1 class="text-4xl font-bold mb-6">📷 Submit Activity</h1>
+        <div id="success-message" class="hidden bg-green-500 text-white p-3 rounded mb-4">
+            ✅ Activity data added successfully!
+        </div>
+        <div id="error-message" class="hidden bg-red-500 text-white p-3 rounded mb-4">
+            ❌ Failed to submit data. Please try again.
+        </div>
+        <form id="activityForm" class="bg-gray-800 p-6 rounded-lg shadow-lg border-l-4 border-blue-500">
+            <label class="block mb-2">Date:</label>
+            <input type="date" id="date" class="w-full p-2 mb-4 bg-gray-700 rounded">
+
+            <label class="block mb-2">Time:</label>
+            <input type="time" id="time" class="w-full p-2 mb-4 bg-gray-700 rounded">
+
+            <label class="block mb-2">Division:</label>
+            <select id="division" class="w-full p-2 mb-4 bg-gray-700 rounded" onchange="updateZones()">
+                <option value="">Select Division</option>
+                <option value="SMS">SMS</option>
+                <option value="RMD">RMD</option>
+                <option value="PD">PD</option>
+                <option value="CS">CS</option>
+                <option value="ADMIN & HR">ADMIN & HR</option>
+                <option value="SID">SID</option>
+            </select>
+
+            <label class="block mb-2">Zone:</label>
+            <select id="zone" class="w-full p-2 mb-4 bg-gray-700 rounded">
+                <option value="">Select Zone</option>
+            </select>
+
+            <label class="block mb-2">Username:</label>
+            <input type="text" id="userName" class="w-full p-2 mb-4 bg-gray-700 rounded">
+
+            <label class="block mb-2">Number of Activities:</label>
+            <input type="number" id="numOfActivities" class="w-full p-2 mb-4 bg-gray-700 rounded" min="1" onchange="updateImageInputs()">
+
+            <label class="block mb-2">Upload Before & After Images:</label>
+            <div id="imageUploads" class="mb-4"></div>
+
+            <button type="submit" class="bg-blue-500 px-4 py-2 rounded">Submit</button>
+        </form>
+    </div>
+
+    <script>
+
+          const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeSidebar = document.getElementById('close-sidebar');
+        menuToggle.addEventListener('click', function () {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+        closeSidebar.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        overlay.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        });
+        const zones = {
+            "SMS": ["SM1 - FURNACE AREA", "SM2 - CASTER AREA", "SM3 - MAINTENANCE AREA", "SM4 - EXTERNAL AREA", "SM5 - NEW FURNACE AREA", "SM6 - NEW FURNACE CASTER AREA", "SM7 - NEW FURNACE MAINTENANCE AREA"],
+            "RMD": ["RM1 - NEW / OLD - CCM TO INDUCTION", "RM2 - INDUCTION AREA", "RM3 - WORKSHOP", "RM4 - MILL FLOOR AREA", "RM5 - ECR BUILDING", "RM6 - THERMEX AREA, LAB", "RM7 - MECHANICAL AREA", "RM8 - BAR TRANSFER", "RM9 - DISPATCH AREA", "RM10 - COOLING BED AREA", "RM11 - PUMP HOUSE"],
+            "PD": ["PD1 - AFBC", "PD2 - 1,2 WHRB", "PD3 - 3,4 WHRB", "PD4 - TG BUILDING", "PD5 - ACC", "PD6 - WATER TREATMENT PLANT", "PD7 - CHP", "PD8 - OXYGEN PLANT"],
+            "CS": ["CS1 - STORES ROAD", "CS2 - STORES PREMISES", "CS3 - OFFICE & INTERNAL HALL", "CS4 - MAIN HALL & 1ST FLOOR"],
+            "ADMIN & HR": ["AD1 - ENTRANCE ROAD", "AD2 - LABOUR COLONY", "AD3 - TIME OFFICE", "AD4 - ADMIN BUILDING", "AD5 - CANTEEN AREA", "AD6 - OLD LABOUR COLONY", "AD7 - SAFETY BUILDING", "AD8 - PROJECT LABOUR QUARTERS"],
+            "SID": ["SD1 - KILN 4 CONTROL ROOM", "SD2 - KILN 3,4 STOCK & JUNCTION HOUSE", "SD3 - KILN 1,2 MCC", "SD4 - KILN 1,2 STOCK & JUNCTION HOUSE", "SD5 - PRODUCT HOUSE", "SD6 - WATER SUMP AREA", "SD7 - COMPRESSOR ROOM", "SD8 - RMHS & STOCK HOUSE TOP", "SD9 - DG ROOM", "SD10 - WET SCRAPPER AREA", "SD11 - ESP", "SD12 - BAG FILTER", "SD13 - SID GARAGE OUTER AREA", "SD14 - SID GARAGE INNER AREA"]
+        };
+
+        function showMessage(type, message) {
+    const successBox = document.getElementById("success-message");
+    const errorBox = document.getElementById("error-message");
+
+    if (type === "success") {
+        successBox.textContent = "✅ " + message;
+        successBox.classList.remove("hidden");
+        errorBox.classList.add("hidden");
+    } else {
+        errorBox.textContent = "❌ " + message;
+        errorBox.classList.remove("hidden");
+        successBox.classList.add("hidden");
+    }
+
+    setTimeout(() => {
+        successBox.classList.add("hidden");
+        errorBox.classList.add("hidden");
+    }, 5000);  
+}
+
+        function updateZones() {
+            const division = document.getElementById("division").value;
+            const zoneSelect = document.getElementById("zone");
+            zoneSelect.innerHTML = "<option value=''>Select Zone</option>";
+
+            if (zones[division]) {
+                zones[division].forEach(zone => {
+                    let option = document.createElement("option");
+                    option.value = zone;
+                    option.textContent = zone;
+                    zoneSelect.appendChild(option);
+                });
+            }
+        }
+
+        function updateImageInputs() {
+            const numOfActivities = document.getElementById("numOfActivities").value;
+            const imageUploads = document.getElementById("imageUploads");
+            imageUploads.innerHTML = "";
+
+            for (let i = 1; i <= numOfActivities; i++) {
+                imageUploads.innerHTML += `
+                    <label class='block mb-2'>Activity ${i} - Before Image:</label>
+                    <input type='file' name='beforeImage${i}' class='w-full p-2 mb-4 bg-gray-700 rounded'>
+                    <label class='block mb-2'>Activity ${i} - After Image:</label>
+                    <input type='file' name='afterImage${i}' class='w-full p-2 mb-4 bg-gray-700 rounded'>
+                `;
+            }
+        }
+        document.getElementById("activityForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData();
+            formData.append("date", document.getElementById("date").value);
+            formData.append("time", document.getElementById("time").value);
+            formData.append("division", document.getElementById("division").value);
+            formData.append("zone", document.getElementById("zone").value);
+            formData.append("userName", document.getElementById("userName").value);
+            formData.append("numOfActivities", document.getElementById("numOfActivities").value);
+
+            const numOfActivities = parseInt(document.getElementById("numOfActivities").value);
+            const fileInputs = document.querySelectorAll("input[type='file']");
+
+            if (fileInputs.length !== numOfActivities * 2) {
+                alert(`You must upload ${numOfActivities} before and ${numOfActivities} after images.`);
+                return;
+            }
+
+            fileInputs.forEach((fileInput) => {
+                if (fileInput.files.length > 0) {
+                    formData.append("images", fileInput.files[0]);
+                }
+            });
+
+            try {
+                const response = await fetch("http://localhost:5000/add-data", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage("success", "Activity data added successfully!");
+                    document.getElementById("activityForm").reset();
+                    document.getElementById("imageUploads").innerHTML = "";
+                } else {
+                    showMessage("error", result.error || "An error occurred!");
+                }
+            } catch (error) {
+                alert("Failed to submit data. Please try again.");
+            }
+        });
+        window.onload = () => {
+          
+            document.getElementById('sidebar').classList.remove('opacity-0');
+        };
+    </script>
+</body>
+</html>

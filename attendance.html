@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance | 5S Dashboard</title>
+    <style>
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidebar.active {
+            transform: translateX(0);
+        }
+        @media (min-width: 768px) {
+            #sidebar {
+                transform: translateX(0);
+            }
+            #menu-toggle {
+                display: none;
+            }
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        #overlay.active {
+            display: block;
+        }
+    </style> 
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col md:flex-row">
+    
+    <!-- Mobile Menu Button -->
+    <button id="menu-toggle" class="md:hidden bg-blue-600 p-3 fixed top-4 right-4 rounded z-50">☰ Menu</button>
+
+    <div id="overlay" class="hidden fixed inset-0 bg-black opacity-50 z-40"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-gray-800 h-screen p-6 fixed md:relative z-50 md:translate-x-0 opacity-0 transition-opacity duration-300">
+        <button id="close-sidebar" class="md:hidden text-white text-2xl absolute top-4 right-4">✖</button>
+        <h1 class="text-2xl font-bold mb-6">5S Dashboard</h1>
+        <nav>
+            <ul>
+                <li class="mb-4"><a href="index.html" class="text-blue-400">📊 Dashboard</a></li>
+                <li class="mb-4"><a href="add-activity.html" class="text-gray-300 hover:text-white">📷 Add Activity</a></li>
+                <li class="mb-4"><a href="announcements.html" class="text-gray-300 hover:text-white">📢 Announcements</a></li>
+                <li class="mb-4"><a href="attendance.html" class="text-gray-300 hover:text-white">✅ Attendance</a></li>
+                <li class="mb-4"><a href="records.html" class="text-gray-300 hover:text-white">📋 View Records</a></li>
+                <li class="mb-4"><a href="view-attendance.html" class="text-gray-300 hover:text-white">📋 View Attendance</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <div class="flex-1 p-8">
+        <br>
+        <br>
+        <h1 class="text-3xl font-bold mb-6 text-center">✅ Mark Attendance</h1>
+
+        <div id="messageBox" class="hidden p-4 mb-4 rounded-lg text-center"></div>
+
+        <form id="attendanceForm" class="bg-gray-800 p-6 rounded-lg">
+            <label class="block mb-2 font-semibold">Name of the User:</label>
+            <input type="text" id="userName" class="w-full p-2 mb-4 bg-gray-700 rounded text-white" required>
+            
+            <label class="block mb-2 font-semibold">Division Name:</label>
+            <select id="division" class="w-full p-2 mb-4 bg-gray-700 rounded text-white" required>
+                <option value="">Select Division</option>
+                <option value="SMS">SMS</option>
+                <option value="RMD">RMD</option>
+                <option value="PD">PD</option>
+                <option value="CS">CS</option>
+                <option value="ADMIN & HR">ADMIN & HR</option>
+                <option value="SID">SID</option>
+            </select>
+            
+            <label class="block mb-2 font-semibold">Event:</label>
+            <select id="event" class="w-full p-2 mb-4 bg-gray-700 rounded text-white" required>
+                <option value="">Select Event</option>
+                <option value="5S Training">5S Training</option>
+                <option value="Monthly Meeting">Monthly Meeting</option>
+                <option value="Audit Review">Audit Review</option>
+                <option value="Improvement Activity">Improvement Activity</option>
+            </select>
+            
+            <label class="block flex items-center mb-4">
+                <input type="checkbox" id="confirmation" class="mr-2">
+                <span>I have attended this event.</span>
+            </label>
+            
+            <button type="submit" class="bg-blue-500 px-4 py-2 rounded w-full font-semibold">Save</button>
+        </form>
+    </div>
+
+    <script>
+    
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeSidebar = document.getElementById('close-sidebar');
+
+        menuToggle.addEventListener('click', function () {
+            sidebar.classList.add('active');
+            overlay.classList.remove('hidden');
+        });
+
+        closeSidebar.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.add('hidden');
+        });
+
+        overlay.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.add('hidden');
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                sidebar.classList.remove('active');
+                overlay.classList.add('hidden');
+            }
+        });
+
+        
+        document.getElementById("attendanceForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const userName = document.getElementById("userName").value;
+            const division = document.getElementById("division").value;
+            const eventName = document.getElementById("event").value;
+            const confirmation = document.getElementById("confirmation").checked;
+            const messageBox = document.getElementById("messageBox");
+
+            if (!confirmation) {
+                messageBox.textContent = "⚠️ Please confirm that you have attended the event.";
+                messageBox.className = "bg-red-500 text-white p-4 mb-4 rounded-lg text-center";
+                messageBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch("http://localhost:5000/mark-attendance", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userName, division, event: eventName, attended: true })
+                });
+
+                const result = await response.json();
+
+                messageBox.textContent = result.message || "✅ Attendance marked successfully!";
+                messageBox.className = "bg-green-500 text-white p-4 mb-4 rounded-lg text-center";
+                messageBox.classList.remove("hidden");
+
+                document.getElementById("attendanceForm").reset();
+
+            } catch (error) {
+                messageBox.textContent = "❌ Error marking attendance. Please try again.";
+                messageBox.className = "bg-red-500 text-white p-4 mb-4 rounded-lg text-center";
+                messageBox.classList.remove("hidden");
+            }
+        });
+
+        // Ensure sidebar appears on page load
+        window.onload = () => {
+            document.getElementById('sidebar').classList.remove('opacity-0');
+        };
+    </script>
+
+</body>
+</html>
