@@ -96,7 +96,7 @@
         });
         async function fetchDashboardSummary() {
             try {
-                const response = await fetch('http://localhost:5000/dashboard-summary');
+                const response = await fetch('https://fives-backend.onrender.com/dashboard-summary');
                 const data = await response.json();
                 document.getElementById('totalActivities').innerText = data.totalActivities || "N/A";
                 document.getElementById('totalUsers').innerText = data.totalUsers || "N/A";
